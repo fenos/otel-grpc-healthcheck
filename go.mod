@@ -5,6 +5,7 @@ go 1.21
 toolchain go1.21.8
 
 require (
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	go.opentelemetry.io/collector/component v0.99.0
 	go.opentelemetry.io/collector/config/configgrpc v0.99.0
 	go.opentelemetry.io/collector/config/confignet v0.99.0
