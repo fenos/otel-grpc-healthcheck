@@ -29,6 +29,33 @@ type grpcHealthCheckExtension struct {
 	settings component.TelemetrySettings
 }
 
+type HealthServerWithLog struct {
+	logger *zap.Logger
+	*health.Server
+}
+
+func NewHealthServerWithLog(logger *zap.Logger) *HealthServerWithLog {
+	return &HealthServerWithLog{
+		logger: logger,
+		Server: health.NewServer(),
+	}
+}
+
+func (h *HealthServerWithLog) Check(ctx context.Context, in *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+	h.logger.Info("Checking health")
+	resp, err := h.Server.Check(ctx, in)
+
+	if err != nil {
+		h.logger.Info("Health check result", zap.Any("response", resp.Status.String()))
+	}
+
+	return resp, err
+}
+
+func (h *HealthServerWithLog) Watch(in *healthpb.HealthCheckRequest, stream healthpb.Health_WatchServer) error {
+	return h.Server.Watch(in, stream)
+}
+
 func (gc *grpcHealthCheckExtension) Start(ctx context.Context, host component.Host) error {
 	gc.logger.Info("Starting grpc_health_check extension", zap.Any("config", gc.config))
 
@@ -44,7 +71,7 @@ func (gc *grpcHealthCheckExtension) Start(ctx context.Context, host component.Ho
 	}
 
 	gc.stopCh = make(chan struct{})
-	hs := health.NewServer()
+	hs := NewHealthServerWithLog(gc.logger)
 
 	// Register the health server with the gRPC server
 	healthpb.RegisterHealthServer(gc.server, hs)
