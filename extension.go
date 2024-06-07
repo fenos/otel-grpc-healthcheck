@@ -45,8 +45,12 @@ func (h *HealthServerWithLog) Check(ctx context.Context, in *healthpb.HealthChec
 	h.logger.Info("Checking health")
 	resp, err := h.Server.Check(ctx, in)
 
-	if err != nil {
+	if err == nil {
 		h.logger.Info("Health check result", zap.Any("response", resp.Status.String()))
+	}
+
+	if err != nil {
+		h.logger.Error("Error checking health", zap.Error(err))
 	}
 
 	return resp, err
